@@ -62,6 +62,7 @@ export const runSimulation = (config: SimulationConfig, mode: 'REACTIVE' | 'PAA'
     // 3. PAA Prediction Logic
     let predictedRisk = 0;
     let extraSafetyStock = 0;
+    let agentAction: string | null = null;
 
     if (mode === 'PAA') {
       // PAA Agent "looks ahead" into the randomEvents (simulating advanced forecasting)
@@ -78,6 +79,13 @@ export const runSimulation = (config: SimulationConfig, mode: 'REACTIVE' | 'PAA'
       // Autonomous Action: Reroute/Expedite or Over-produce before disruption
       if (predictedRisk > 0.5) {
         extraSafetyStock = config.reorderQuantity * 2; // Aggressive stockpiling
+        agentAction = "PREDICTED FAILURE: Expediting Orders";
+      } else if (backorders > 0) {
+        agentAction = "RECOVERY MODE: Prioritizing Backorders";
+      } else if (warehouseStock > config.reorderLevel * 2) {
+         agentAction = "OPTIMIZATION: Reducing Safety Stock"; // Damping bullwhip
+      } else {
+         agentAction = "MONITORING: Nominal Operations";
       }
     }
 
@@ -113,8 +121,10 @@ export const runSimulation = (config: SimulationConfig, mode: 'REACTIVE' | 'PAA'
       sumQueue(assemblyQueue) + 
       sumQueue(fabQueue);
 
+    let orderQty = 0;
+
     if (inventoryPosition < effectiveReorderLevel + extraSafetyStock) {
-      let orderQty = config.reorderQuantity;
+      orderQty = config.reorderQuantity;
       
       if (mode === 'PAA' && predictedRisk > 0.5) {
         orderQty *= 1.5; // Bulk up
@@ -168,7 +178,9 @@ export const runSimulation = (config: SimulationConfig, mode: 'REACTIVE' | 'PAA'
       backorders,
       sales: fulfilled,
       disruptionActive: fabStatus === NodeStatus.DISRUPTED,
-      predictedRisk
+      predictedRisk,
+      orderQuantity: orderQty,
+      agentAction
     });
   }
 

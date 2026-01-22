@@ -28,6 +28,8 @@ export interface DailyStats {
   sales: number;
   disruptionActive: boolean;
   predictedRisk: number; // For PAA
+  orderQuantity: number; // For Bullwhip chart
+  agentAction: string | null; // For Agent Monitor
 }
 
 export interface SimulationResult {

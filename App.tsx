@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { ConfigPanel } from './components/ConfigPanel';
 import { ResultsCharts } from './components/ResultsCharts';
 import { NetworkViz } from './components/NetworkViz';
+import { AgentMonitor } from './components/AgentMonitor';
 import { DEFAULT_CONFIG } from './constants';
 import { runSimulation } from './services/simulation';
 import { SimulationConfig, SimulationResult, NodeStatus } from './types';
@@ -14,6 +15,10 @@ const App: React.FC = () => {
   const [isSimulating, setIsSimulating] = useState(false);
   const [simulationDay, setSimulationDay] = useState(0);
   const [fabStatus, setFabStatus] = useState(NodeStatus.NORMAL);
+  
+  // Live Data State
+  const [currentRisk, setCurrentRisk] = useState(0);
+  const [currentAction, setCurrentAction] = useState<string | null>(null);
 
   const handleRunSimulation = useCallback(() => {
     setIsSimulating(true);
@@ -35,13 +40,21 @@ const App: React.FC = () => {
         setIsSimulating(false);
         setSimulationDay(config.simulationDuration);
         setFabStatus(NodeStatus.NORMAL);
+        setCurrentAction("Simulation Complete");
       } else {
         setSimulationDay(day);
+        
         // Update Visual Fab Status based on Reactive data (baseline)
-        const isDisrupted = resReactive.stats[Math.min(day, resReactive.stats.length - 1)].disruptionActive;
+        const currentStatsReactive = resReactive.stats[Math.min(day, resReactive.stats.length - 1)];
+        const isDisrupted = currentStatsReactive.disruptionActive;
         setFabStatus(isDisrupted ? NodeStatus.DISRUPTED : NodeStatus.NORMAL);
+
+        // Update PAA Monitor Data
+        const currentStatsPAA = resPAA.stats[Math.min(day, resPAA.stats.length - 1)];
+        setCurrentRisk(currentStatsPAA.predictedRisk);
+        setCurrentAction(currentStatsPAA.agentAction);
       }
-    }, 20); // 20ms per frame
+    }, 50); // Slower frame rate for readability of agent actions
   }, [config]);
 
   // Initial Run
@@ -134,6 +147,13 @@ const App: React.FC = () => {
             totalDays={config.simulationDuration} 
           />
 
+          {/* PAA Agent Working Window */}
+          <AgentMonitor 
+            currentDay={simulationDay}
+            riskLevel={currentRisk}
+            action={currentAction}
+          />
+
           {/* Charts */}
           {resultsReactive && resultsPAA ? (
              <ResultsCharts dataReactive={resultsReactive.stats} dataPAA={resultsPAA.stats} />
@@ -149,7 +169,7 @@ const App: React.FC = () => {
             <ul className="list-disc pl-5 space-y-1">
               <li><strong>Reactive Mode:</strong> Uses fixed reorder points. When Fab disrupts, the warehouse stocks out after lead times.</li>
               <li><strong>PAA Mode (Predictive Agents):</strong> Agents monitor 'Disruption Probability'. If a high risk is detected (e.g., probability spike), the <strong>Autonomous Warehouse Agent</strong> triggers an emergency pre-order.</li>
-              <li><strong>Simulation Engine:</strong> Modeled in TypeScript (replacing Python/SimPy) using discrete daily steps for demand, production, and transit queues.</li>
+              <li><strong>Bullwhip Dampening:</strong> The new chart shows how PAA places smoother orders or pre-emptively orders, whereas the Reactive model panic-buys after a disruption.</li>
             </ul>
           </div>
         </div>

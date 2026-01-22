@@ -17,6 +17,8 @@ export const ResultsCharts: React.FC<ResultsChartsProps> = ({ dataReactive, data
     paaInv: dataPAA[i]?.inventoryWarehouse || 0,
     reactiveBackorders: d.backorders,
     paaBackorders: dataPAA[i]?.backorders || 0,
+    reactiveOrders: d.orderQuantity,
+    paaOrders: dataPAA[i]?.orderQuantity || 0,
     disruption: d.disruptionActive ? 1 : 0
   }));
 
@@ -64,20 +66,40 @@ export const ResultsCharts: React.FC<ResultsChartsProps> = ({ dataReactive, data
         </div>
       </div>
 
-      <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
-        <h3 className="text-lg font-bold text-gray-800 mb-4">Backorders / Shortages Impact</h3>
-        <div className="h-64 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={mergedData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="day" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="reactiveBackorders" stroke="#ef4444" strokeWidth={2} name="Traditional Backorders" />
-              <Line type="monotone" dataKey="paaBackorders" stroke="#10b981" strokeWidth={2} name="PAA Backorders" />
-            </LineChart>
-          </ResponsiveContainer>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
+          <h3 className="text-lg font-bold text-gray-800 mb-4">Backorders / Shortages</h3>
+          <div className="h-56 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={mergedData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="day" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="reactiveBackorders" stroke="#ef4444" strokeWidth={2} name="Reactive Shortage" dot={false} />
+                <Line type="monotone" dataKey="paaBackorders" stroke="#10b981" strokeWidth={2} name="PAA Shortage" dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
+          <h3 className="text-lg font-bold text-gray-800 mb-4">Bullwhip Effect Analysis</h3>
+          <p className="text-xs text-gray-500 mb-2">Order Quantity Variability (Orders Placed at Fab)</p>
+          <div className="h-56 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={mergedData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="day" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line type="step" dataKey="reactiveOrders" stroke="#ef4444" strokeWidth={2} name="Reactive Orders" dot={false} />
+                <Line type="step" dataKey="paaOrders" stroke="#10b981" strokeWidth={2} name="PAA Orders" dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
     </div>
