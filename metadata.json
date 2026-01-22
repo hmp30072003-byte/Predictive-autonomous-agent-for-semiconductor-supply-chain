@@ -1,0 +1,5 @@
+{
+  "name": "Semiconductor Supply Chain Digital Twin",
+  "description": "A predictive autonomous agent simulation for hyper-resilient semiconductor supply chains. Models Fab, Assembly, and Distribution logistics with disruption scenarios.",
+  "requestFramePermissions": []
+}
